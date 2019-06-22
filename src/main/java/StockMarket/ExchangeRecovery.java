@@ -55,6 +55,8 @@ class StateResponse {
 interface Stateful<T> {
     SpreadConnection getConnection ();
 
+    SpreadGroup getPublicGroup ();
+
     Serializer getSerializer ();
 
     T getState ();
@@ -66,6 +68,8 @@ public class ExchangeRecovery<T> {
     private Stateful<T> stateful;
 
     private boolean isRecovered = false;
+
+    private boolean isRecovering = false;
 
     private boolean isBuffering = true;
 
@@ -131,14 +135,25 @@ public class ExchangeRecovery<T> {
      * @throws SpreadException
      */
     public void requestState ( SpreadGroup[] members ) throws SpreadException {
-        StateRequest request = new StateRequest( this.stateful.getConnection().getPrivateGroup().toString(), members[ 0 ].toString() );
+        this.isRecovering = true;
+
+        int otherIndex = 0;
+
+        for ( int i = 0 ; i < members.length ; i++ ) {
+            if ( !members[ i ].toString().equals( this.stateful.getConnection().getPrivateGroup().toString() ) ) {
+                otherIndex = i;
+                break;
+            }
+        }
+
+        StateRequest request = new StateRequest( this.stateful.getConnection().getPrivateGroup().toString(), members[ otherIndex ].toString() );
 
         SpreadMessage message = new SpreadMessage();
 
         byte[] bytes = this.stateful.getSerializer().encode( request );
 
         message.setSelfDiscard( false );
-        message.addGroup( members[ 0 ] );
+        message.addGroup( this.stateful.getPublicGroup() );
         message.setData( bytes );
 
         this.stateful.getConnection().multicast( message );
@@ -164,15 +179,31 @@ public class ExchangeRecovery<T> {
         }
     }
 
+    public boolean onMembershipMiddleware ( SpreadMessage message ) throws SpreadException {
+        if ( message.isMembership() && !this.isRecovered && !this.isRecovering ) {
+            SpreadGroup[] members = message.getMembershipInfo().getMembers();
+
+            if ( members.length <= 1 ) {
+                this.setIsRecovered( true );
+            } else {
+                this.requestState( members );
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     public boolean onStateRequestMiddleware ( SpreadMessage message, Object object ) throws SpreadException {
         if ( object instanceof StateRequest ) {
             StateRequest request = ( StateRequest ) object;
 
             // When we receive our own state request, we should start buffering all other operation messages
             // TODO check our sender "comparison" algorithm
-            if ( request.getSender().equals( message.getSender().toString() ) ) {
+            if ( request.getSender().equals( this.stateful.getConnection().getPrivateGroup().toString() ) ) {
                 this.isBuffering = true;
-            } else if ( request.getTarget().equals( message.getSender().toString() ) ) {
+            } else if ( request.getTarget().equals( this.stateful.getConnection().getPrivateGroup().toString() ) ) {
                 this.sendState( message.getSender(), this.stateful.getState() );
             }
 
@@ -204,6 +235,8 @@ public class ExchangeRecovery<T> {
                 this.isBuffering = false;
 
                 this.isRecovered = true;
+
+                this.isRecovering = false;
             }
 
             return true;
@@ -220,49 +253,5 @@ public class ExchangeRecovery<T> {
         }
 
         return false;
-    }
-
-    public static void main ( String[] args ) {
-        try {
-            SpreadConnection connection = new SpreadConnection();
-
-            SpreadGroup publicGroup = new SpreadGroup();
-
-            Serializer serializer = new SerializerBuilder().addType( StateRequest.class ).addType( StateResponse.class ).build();
-
-            // TODO instead of null we will have to pass a real object for this to work
-            ExchangeRecovery<Integer> recovery = new ExchangeRecovery<>( null );
-
-            connection.add( message -> {
-                try {
-                    Object obj = serializer.decode( message.getData() );
-
-                    if ( recovery.onStateRequestMiddleware( message, obj ) ) return;
-
-                    if ( recovery.onStateResponseMiddleware( message, obj ) ) return;
-
-                    if ( recovery.onBufferedMessageMiddleware( message ) ) return;
-
-                    if ( recovery.getIsRecovered() ) {
-                        SpreadMessage buffered = null;
-
-                        while ( ( buffered = recovery.getQueue().poll() ) != null ) {
-                            // Execute operation buffered
-                        }
-
-                        // Execute operation message
-                    }
-                } catch ( SpreadException e ) {
-                    e.printStackTrace();
-                }
-            } );
-
-
-            connection.connect( null, 4803, "servers" + args[ 0 ], false, true );
-
-            publicGroup.join( connection, "servers" );
-        } catch ( SpreadException e ) {
-            e.printStackTrace();
-        }
     }
 }
