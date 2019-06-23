@@ -10,12 +10,20 @@ public class Share {
     private long spendBudget;
     private int valueReference;
 
-    public Share(int quantity, Date boughtDate, Date soldDate, int valueReference) {
+    public Share(int quantity, Date boughtDate, long spendBudget, int valueReference) {
+        this.quantity = quantity;
+        this.boughtDate = boughtDate;
+        this.valueReference = valueReference;
+        this.spendBudget = spendBudget;
+        this.soldDate = null;
+    }
+
+    public Share(int quantity, Date boughtDate, Date soldDate, long spendBudget, int valueReference) {
         this.quantity = quantity;
         this.boughtDate = boughtDate;
         this.soldDate = soldDate;
+        this.spendBudget = spendBudget;
         this.valueReference = valueReference;
-        this.soldDate = null;
     }
 
     public int getQuantity() {
@@ -25,6 +33,8 @@ public class Share {
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
+
+    public void incrementQuantity(){this.quantity++;}
 
     public Date getBoughtDate() {
         return boughtDate;
@@ -61,5 +71,7 @@ public class Share {
     public void finishShare(){
         this.soldDate = new Date();
     }
+
+
 
 }
