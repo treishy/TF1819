@@ -63,14 +63,17 @@ public class User {
                     share.setQuantity(share.getQuantity() - 1);
                 }
                 this.sharesHistory.add(new Share(1, share.getBoughtDate(), new Date(), share.getSpendBudget(), share.getValueReference()));
-
+                this.budget += share.getSpendBudget();
         }
     }
 
     public void addOneNewShare(int valueID, long budget){
-        if (ownedShares.containsKey(valueID)){
-            this.ownedShares.get(valueID).incrementQuantity();
+        if((this.budget - budget) >= 0){
+            if (ownedShares.containsKey(valueID)){
+                this.ownedShares.get(valueID).incrementQuantity();
+            }
+            else this.ownedShares.put(valueID,(new Share(1,new Date(),budget,valueID)));
+            this.budget -= budget;
         }
-        else this.ownedShares.put(valueID,(new Share(1,new Date(),budget,valueID)));
     }
 }
