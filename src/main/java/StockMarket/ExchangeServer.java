@@ -8,6 +8,7 @@ import spread.SpreadGroup;
 import spread.SpreadMessage;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Scanner;
 
 class State {
@@ -30,11 +31,7 @@ public class ExchangeServer implements Stateful<State> {
 
     private static int port;
 
-    private ExchangeImpl exchange = new ExchangeImpl(new ArrayList<Value>() {
-        {
-            add(new Value(0, "TF", "TF", "TF", 100));
-        }
-    });
+    private ExchangeImpl exchange = new ExchangeImpl( new ArrayList<>());
 
     private SpreadConnection connection = new SpreadConnection();
 
@@ -45,16 +42,23 @@ public class ExchangeServer implements Stateful<State> {
     protected ExchangeRecovery<State> recovery;
 
     private Serializer serializer = new SerializerBuilder()
+            .addType(Value.class)
+            .addType(Operation.class)
+            .addType(Operation.State.class)
+            .addType(User.class)
+            .addType(Share.class)
+            .addType(Date.class)
             .addType(State.class)
             .addType(ExchangeImpl.class)
-            .addType(Value.class)
             .addType(StateRequest.class)
             .addType(StateResponse.class)
+            .addType(ExchangeServer.class)
             .build();
 
     public ExchangeServer(int port) {
         this.port = port;
         this.recovery = new ExchangeRecovery<>( this );
+        this.exchange.getCatalogValues().add( new Value(0, "TF", "TF", "TF", 100) );
         System.out.println(serializer.toString());
     }
 
