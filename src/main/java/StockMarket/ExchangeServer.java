@@ -9,6 +9,7 @@ import spread.SpreadMessage;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Scanner;
 
 class State {
@@ -31,7 +32,7 @@ public class ExchangeServer implements Stateful<State> {
 
     private static int port;
 
-    private ExchangeImpl exchange = new ExchangeImpl( new ArrayList<>());
+    private ExchangeImpl exchange = new ExchangeImpl( new HashMap<>());
 
     private SpreadConnection connection = new SpreadConnection();
 
@@ -58,7 +59,7 @@ public class ExchangeServer implements Stateful<State> {
     public ExchangeServer(int port) {
         this.port = port;
         this.recovery = new ExchangeRecovery<>( this );
-        this.exchange.getCatalogValues().add( new Value(0, "TF", "TF", "TF", 100) );
+        this.exchange.getCatalogValues().put(0,( new Value(0, "TF", "TF", "TF", 100, 40) ));
         System.out.println(serializer.toString());
     }
 
@@ -95,20 +96,23 @@ public class ExchangeServer implements Stateful<State> {
     private void processRequest(SpreadMessage spreadMessage) throws SpreadException {
         Request request = (Request) spreadMessage.getObject();
         Operation operation;
+        HashMap<Integer,Long> changes = null;
         switch (spreadMessage.getType()) {
             case 1:
                 System.out.printf("Received new buy operation ...\n");
                 operation = new Operation(request.getValueID(), request.getUserID(), counterId, true);
                 exchange.addNewOrder(operation);
-                exchange.processOperation();
+                changes = exchange.processOperation();
+                //processchanges
                 counterId++;
                 break;
             case 2:
                 System.out.printf("Received new sell operation ...\n");
                 operation = new Operation(request.getValueID(), request.getUserID(), counterId, false);
                 exchange.addNewOrder(operation);
-                exchange.processOperation();
+                changes = exchange.processOperation();
                 counterId++;
+                //process changes
                 break;
             default:
                 System.out.printf("Received a unknown request ...\n");

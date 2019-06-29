@@ -75,7 +75,7 @@ public class ExchangeImpl {
 
     }
 
-    public Map<Integer, Long> processOperation(){ // devolve um map {id do utilizador, mudanca de valor}
+    public HashMap<Integer, Long> processOperation(){ // devolve um map {id do utilizador, mudanca de valor}
         Operation op = this.queuedOperations.get(0);
         HashMap changes = new HashMap<>();
 
