@@ -120,7 +120,7 @@ public class ExchangeServer implements Stateful<State> {
     }
 
     public void init() throws Exception {
-        connection.connect(null, 4803,"s"+this.port, false, true);
+        connection.connect(null, 4803,"s"+this.port, false, false);
         group.join(connection, "excServers");
         connectionHandler();
     }
