@@ -9,18 +9,18 @@ import java.util.concurrent.atomic.AtomicLong;
 import static StockMarket.Operation.State.TOPROCESS;
 
 public class ExchangeImpl {
-    private List<Value> catalogValues;
+    private Map<Integer,Value> catalogValues;
     private List<Operation> queuedOperations;
     private List<Operation> processedOperations;
     private Map<String,User> users;
 
-    public ExchangeImpl(List<Value> catalogValues, List<Operation> queuedOperations, List<Operation> processedOperations) {
+    public ExchangeImpl(Map<Integer,Value> catalogValues, List<Operation> queuedOperations, List<Operation> processedOperations) {
         this.catalogValues = catalogValues;
         this.queuedOperations = queuedOperations;
         this.processedOperations = processedOperations;
     }
 
-    public ExchangeImpl(List<Value> catalogValues) {
+    public ExchangeImpl(Map<Integer, Value> catalogValues) {
         this.catalogValues = catalogValues;
         this.queuedOperations = new ArrayList<>();
         this.processedOperations = new ArrayList<>();
@@ -35,11 +35,11 @@ public class ExchangeImpl {
         this.users = users;
     }
 
-    public List<Value> getCatalogValues() {
+    public Map<Integer, Value> getCatalogValues() {
         return catalogValues;
     }
 
-    public void setCatalogValues(List<Value> catalogValues) {
+    public void setCatalogValues(Map<Integer, Value> catalogValues) {
         this.catalogValues = catalogValues;
     }
 
@@ -67,34 +67,54 @@ public class ExchangeImpl {
         return operationAdded;
     }
 
-    public void processOperation(){ //secalhar meter a devolver um map {id do utilizador, mudanca de valor}
-        Operation op = null;
+    public long obtainValueLong(int valueId){
+        if(this.catalogValues.containsKey(valueId)){
+            return this.catalogValues.get(valueId).getBudgetValue();
+        }
+        else return 0;
+
+    }
+
+    public Map<Integer, Long> processOperation(){ // devolve um map {id do utilizador, mudanca de valor}
+        Operation op = this.queuedOperations.get(0);
+        HashMap changes = new HashMap<>();
+
         if(this.queuedOperations.size() > 0) {
             op = this.queuedOperations.get(0);
             this.queuedOperations.remove(op);
             boolean found = false;
-            for(Operation pop: this.processedOperations){
-                if (op.getValueID()==(pop.getValueID()) && op.isBuyOperation() != op.isBuyOperation()){
-                    found = true;
-                    pop.evolveState();
-                    op.evolveState();
-                    this.processedOperations.remove(pop);
-                    found= true;
-                    if (pop.isBuyOperation()) {
-                        removeUserShare(op.getValueID(),op.getUserID());
-                        addUserShare(pop.getValueID(),pop.getUserID());
+            if (op.isBuyOperation() && this.catalogValues.get(op.getValueID()).available()) {
+                addUserShare(op.getValueID(), op.getUserID());
+                this.catalogValues.get(op.getValueID()).decrementQuantity();
+                changes.put(op.getUserID(), obtainValueLong(op.getValueID()));
+            } else {
+                for (Operation pop : this.processedOperations) {
+                    if (op.getValueID() == (pop.getValueID()) && op.isBuyOperation() != op.isBuyOperation()) {
+                        found = true;
+                        pop.evolveState();
+                        op.evolveState();
+                        this.processedOperations.remove(pop);
+                        found = true;
+                        if (pop.isBuyOperation()) {
+                            removeUserShare(op.getValueID(), op.getUserID());
+                            addUserShare(pop.getValueID(), pop.getUserID());
+                            changes.put(op.getUserID(), obtainValueLong(op.getValueID()));
+                            changes.put(pop.getUserID(), -obtainValueLong(op.getValueID()));
+                        } else {
+                            removeUserShare(pop.getValueID(), pop.getUserID());
+                            addUserShare(op.getValueID(), op.getUserID());
+                            changes.put(op.getUserID(), -obtainValueLong(op.getValueID()));
+                            changes.put(pop.getUserID(), obtainValueLong(op.getValueID()));
+                        }
+                        break;
                     }
-                    else {
-                        removeUserShare(pop.getValueID(),pop.getUserID());
-                        addUserShare(op.getValueID(),op.getUserID());
-                    }
-                    break;
                 }
+                if (!found)
+                    this.processedOperations.add(op);
             }
-            if(!found)
-                this.processedOperations.add(op);
         }
 
+        return changes;
     }
 
     public void removeUserShare(int valueID, String user){
