@@ -53,7 +53,7 @@ public class ExchangeServer implements Stateful<State> {
             .addType(StateResponse.class)
             .addType(ExchangeServer.class)
             .addType(Request.class)
-            .addType(String.class)
+            .addType(Response.class)
             .build();
 
     public ExchangeServer(int port) {
@@ -78,12 +78,12 @@ public class ExchangeServer implements Stateful<State> {
                         SpreadMessage buffered;
 
                         while ( ( buffered = recovery.getQueue().poll() ) != null ) {
-                            processRequest(buffered);
+                            processRequest(buffered, serializer.decode( buffered.getData() ));
                         }
 
                         recovery.getQueue().clear();
 
-                        processRequest(message);
+                        processRequest(message, obj);
                     }
                 }
             } catch ( SpreadException e ) {
@@ -92,14 +92,14 @@ public class ExchangeServer implements Stateful<State> {
         } );
     }
 
-    private void processRequest(SpreadMessage spreadMessage) throws SpreadException {
+    private void processRequest(SpreadMessage spreadMessage, Object obj) throws SpreadException {
         Request request;
         Operation operation;
 
         switch (spreadMessage.getType()) {
             case 1:
                 System.out.printf("Received a new buy operation ...\n");
-                request = (Request) spreadMessage.getObject();
+                request = (Request)obj;
                 operation = new Operation(request.getValueID(), request.getUserID(), counterId, true);
                 exchange.addNewOrder(operation);
                 processChanges(exchange.processOperation());
@@ -107,7 +107,7 @@ public class ExchangeServer implements Stateful<State> {
                 break;
             case 2:
                 System.out.printf("Received a new sell operation ...\n");
-                request = (Request) spreadMessage.getObject();
+                request = (Request)obj;
                 operation = new Operation(request.getValueID(), request.getUserID(), counterId, false);
                 exchange.addNewOrder(operation);
                 processChanges(exchange.processOperation());
@@ -115,7 +115,7 @@ public class ExchangeServer implements Stateful<State> {
                 break;
             case 3:
                 System.out.println("Received a new user update message ...");
-                String username = (String) spreadMessage.getObject();
+                String username = (String) obj;
                 User user = exchange.getUsers().get(username);
                 sendResponse(user, (short) 3);
             default:
@@ -135,9 +135,9 @@ public class ExchangeServer implements Stateful<State> {
         }
     }
 
-    private void sendResponse(Serializable obj, short type) throws SpreadException {
+    private void sendResponse(Object obj, short type) throws SpreadException {
         SpreadMessage spreadMessage = new SpreadMessage();
-        spreadMessage.setObject(obj);
+        spreadMessage.setData(this.serializer.encode(obj));
         spreadMessage.setType(type);
         spreadMessage.setReliable();
         connection.multicast(spreadMessage);

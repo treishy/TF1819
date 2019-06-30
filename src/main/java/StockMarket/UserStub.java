@@ -39,7 +39,7 @@ public class UserStub {
             .addType(StateResponse.class)
             .addType(ExchangeServer.class)
             .addType(Request.class)
-            .addType(String.class)
+            .addType(Response.class)
             .build();
 
     public UserStub(int port, String username) {
@@ -55,42 +55,39 @@ public class UserStub {
             e.printStackTrace();
         }
         initCatalogValues();
-        connection.add(new BasicMessageListener() {
-            @Override
-            public void messageReceived(SpreadMessage spreadMessage) {
-                try {
-                    User user = null;
-                    Response rep= null;
-                    System.out.println("message received");
-                    switch (spreadMessage.getType()){
-                        case 1:
-                            System.out.println("Recebido Confirmacao de Buy");
-                            rep = (Response) spreadMessage.getObject();
-                            checkOperationTypeBuy(rep.identifier, rep.valueID, rep.budget);
-                            break;
-                        case 2:
-                            System.out.println("Recebido Confirmacao de Share Vendida");
-                            rep = (Response) spreadMessage.getObject();
-                            checkOperationTypeSell(rep.identifier, rep.valueID);
-                            break;
-                        case 3:
-                            System.out.println("Recebido Informacao de Utilizador");
-                            if(!updated) {
-                                user = (User) spreadMessage.getObject();
-                                updateUserWith(user);
-                            }
-                            break;
-                        default:
-                            System.out.print("Not ready for this kind of message");
-                            break;
-                    }
-
-
-                } catch (Exception e) {
-                    e.printStackTrace();
+        connection.add( spreadMessage -> {
+            try {
+                User user = null;
+                Response rep= null;
+                System.out.println("message received");
+                switch (spreadMessage.getType()){
+                    case 1:
+                        System.out.println("Recebido Confirmacao de Buy");
+                        rep = this.serializer.decode(spreadMessage.getData());
+                        checkOperationTypeBuy(rep.identifier, rep.valueID, rep.budget);
+                        break;
+                    case 2:
+                        System.out.println("Recebido Confirmacao de Share Vendida");
+                        rep = this.serializer.decode(spreadMessage.getData());
+                        checkOperationTypeSell(rep.identifier, rep.valueID);
+                        break;
+                    case 3:
+                        System.out.println("Recebido Informacao de Utilizador");
+                        if(!updated) {
+                            user = this.serializer.decode(spreadMessage.getData());
+                            updateUserWith(user);
+                        }
+                        break;
+                    default:
+                        System.out.print("Not ready for this kind of message");
+                        break;
                 }
+
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        });
+        } );
         sendUserUpdateMessage(username);
 
     }
