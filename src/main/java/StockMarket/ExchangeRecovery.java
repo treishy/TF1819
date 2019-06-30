@@ -200,7 +200,6 @@ public class ExchangeRecovery<T> {
             StateRequest request = ( StateRequest ) object;
 
             // When we receive our own state request, we should start buffering all other operation messages
-            // TODO check our sender "comparison" algorithm
             if ( request.getSender().equals( this.stateful.getConnection().getPrivateGroup().toString() ) ) {
                 this.isBuffering = true;
             } else if ( request.getTarget().equals( this.stateful.getConnection().getPrivateGroup().toString() ) ) {

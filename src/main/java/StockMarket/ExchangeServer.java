@@ -130,7 +130,7 @@ public class ExchangeServer implements Stateful<State> {
     private void processChanges(Map<Operation, Long> changes) throws SpreadException {
         for (Map.Entry<Operation, Long> entry : changes.entrySet()) {
             Operation operation = entry.getKey();
-            Response response = new Response(operation.getValueID(), operation.getIdentifier(), entry.getValue());
+            Response response = new Response(operation.getUserID(), operation.getValueID(), operation.getIdentifier(), entry.getValue());
 
             if (operation.isBuyOperation())
                 sendResponse(response, (short) 1);
@@ -142,8 +142,8 @@ public class ExchangeServer implements Stateful<State> {
     private void sendResponse(Object obj, short type) throws SpreadException {
         SpreadMessage spreadMessage = new SpreadMessage();
         spreadMessage.setData(this.serializer.encode(obj));
-        Request req = (Request) obj;
-        spreadMessage.addGroup(req.userID);
+        Response res = (Response) obj;
+        spreadMessage.addGroup(res.getUserID());
         spreadMessage.setType(type);
         spreadMessage.setReliable();
         connection.multicast(spreadMessage);
@@ -181,7 +181,7 @@ public class ExchangeServer implements Stateful<State> {
 
     private void initUsers() {
         Map<String, User> users = new HashMap<>();
-        users.put("johnsnow", (new User("jonsnow", 500)));
+        users.put("jonsnow", (new User("jonsnow", 500)));
         users.put("nightking", (new User("nightking", 500)));
         exchange.setUsers(users);
     }

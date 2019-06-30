@@ -28,7 +28,7 @@ public class Client {
 
                     break;
                 case 2:
-                    System.out.println("Introduza o valor para o qual deseja fazer a compra");
+                    System.out.println("Introduza o valor para o qual deseja fazer a venda");
                     valueID = scanner.nextInt();
                     user.sendOperationMessage(valueID, false);
                     break;
