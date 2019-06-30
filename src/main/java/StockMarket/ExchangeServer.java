@@ -116,8 +116,11 @@ public class ExchangeServer implements Stateful<State> {
             case 3:
                 System.out.println("Received a new user update message ...");
                 String username = (String) obj;
-                User user = exchange.getUsers().get(username);
-                sendResponse(user, (short) 3);
+                if(exchange.getUsers().containsKey(username)) {
+                    User user = exchange.getUsers().get(username);
+                    sendResponseUser(user, (short) 3);
+                }
+                else System.out.println("We dont have that user");
                 break;
             default:
                 System.out.printf("Received a unknown request ...\n");
@@ -139,10 +142,23 @@ public class ExchangeServer implements Stateful<State> {
     private void sendResponse(Object obj, short type) throws SpreadException {
         SpreadMessage spreadMessage = new SpreadMessage();
         spreadMessage.setData(this.serializer.encode(obj));
+        Request req = (Request) obj;
+        spreadMessage.addGroup(req.userID);
         spreadMessage.setType(type);
         spreadMessage.setReliable();
         connection.multicast(spreadMessage);
     }
+
+    private void sendResponseUser(Object obj, short type) throws SpreadException {
+        SpreadMessage spreadMessage = new SpreadMessage();
+        spreadMessage.setData(this.serializer.encode(obj));
+        User u = (User) obj;
+        spreadMessage.addGroup(u.getUsername());
+        spreadMessage.setType(type);
+        spreadMessage.setReliable();
+        connection.multicast(spreadMessage);
+    }
+
 
     public void init() throws Exception {
         initCatalogValues();

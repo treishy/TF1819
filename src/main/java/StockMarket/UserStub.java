@@ -129,6 +129,7 @@ public class UserStub {
     }
 
     public void sendUserUpdateMessage(String username){
+        System.out.println("Sending User Update Message");
         SpreadMessage message = new SpreadMessage();
         message.setData(this.serializer.encode(username));
         message.addGroup("excServers");
