@@ -4,7 +4,9 @@ import io.atomix.utils.serializer.Serializer;
 import io.atomix.utils.serializer.SerializerBuilder;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 class FakeState {
     long counterid;
@@ -27,8 +29,8 @@ public class Test {
                 .addType(Value.class)
                 .build();
 
-        List<Value> values = new ArrayList<>();
-        values.add(new Value(0, "TF", "TF", "TF", 100));
+        Map<Integer,Value> values = new HashMap<>();
+        values.put(0,(new Value(0, "TF", "TF", "TF", 100,30)));
         ExchangeImpl exchange = new ExchangeImpl(values);
         FakeState state = new FakeState(0, exchange);
 

@@ -37,6 +37,8 @@ public class UserStub {
             .addType(StateRequest.class)
             .addType(StateResponse.class)
             .addType(ExchangeServer.class)
+            .addType(Request.class)
+            .addType(String.class)
             .build();
 
     public UserStub(int port, String username) {
@@ -61,14 +63,17 @@ public class UserStub {
                     System.out.println("message received");
                     switch (spreadMessage.getType()){
                         case 1:
+                            System.out.println("Recebido Confirmacao de Buy");
                             rep = (Response) spreadMessage.getObject();
                             checkOperationTypeBuy(rep.identifier, rep.valueID, rep.budget);
                             break;
                         case 2:
+                            System.out.println("Recebido Confirmacao de Share Vendida");
                             rep = (Response) spreadMessage.getObject();
                             checkOperationTypeSell(rep.identifier, rep.valueID);
                             break;
                         case 3:
+                            System.out.println("Recebido Informacao de Utilizador");
                             user = (User) spreadMessage.getObject();
                             updateUserWith(user);
                             break;
@@ -83,6 +88,7 @@ public class UserStub {
                 }
             }
         });
+        sendUserUpdateMessage(this.user.getUsername());
 
     }
 
