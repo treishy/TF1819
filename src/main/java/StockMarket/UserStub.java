@@ -62,24 +62,25 @@ public class UserStub {
                 System.out.println("message received");
                 switch (spreadMessage.getType()){
                     case 1:
-                        System.out.println("Recebido Confirmacao de Buy");
+                        //System.out.println("Recebido Confirmacao de Buy");
                         rep = this.serializer.decode(spreadMessage.getData());
                         checkOperationTypeBuy(rep.identifier, rep.valueID, rep.budget);
                         break;
                     case 2:
-                        System.out.println("Recebido Confirmacao de Share Vendida");
+                        //System.out.println("Recebido Confirmacao de Share Vendida");
                         rep = this.serializer.decode(spreadMessage.getData());
                         checkOperationTypeSell(rep.identifier, rep.valueID);
                         break;
                     case 3:
-                        System.out.println("Recebido Informacao de Utilizador");
+
                         if(!updated) {
+                            System.out.println("Recebido Informacao de Utilizador");
                             user = this.serializer.decode(spreadMessage.getData());
                             updateUserWith(user);
                         }
                         break;
                     default:
-                        System.out.print("Not ready for this kind of message");
+                        System.out.print("UserStub recebeu tipo de pedido errado --debug");
                         break;
                 }
 
@@ -148,7 +149,7 @@ public class UserStub {
         if(!this.operationsHistory.contains(operationID)){
             this.operationsHistory.add(operationID);
             user.addOneNewShare(value,budget);
-            System.out.println("You Managed to Get the Share for the Value " + value);
+            System.out.println("Conseguiu comprar uma accao do valor: " + value);
         }
     }
 
@@ -156,7 +157,7 @@ public class UserStub {
         if(!this.operationsHistory.contains(operationID)){
             this.operationsHistory.add(operationID);
             user.removeOneShareByID(value);
-            System.out.println("You Managed to Sell the Share for the Value " + value);
+            System.out.println("Conseguiu vender uma accao do valor: " + value);
         }
     }
 
