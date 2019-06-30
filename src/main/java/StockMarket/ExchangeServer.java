@@ -118,6 +118,7 @@ public class ExchangeServer implements Stateful<State> {
                 String username = (String) obj;
                 User user = exchange.getUsers().get(username);
                 sendResponse(user, (short) 3);
+                break;
             default:
                 System.out.printf("Received a unknown request ...\n");
         }

@@ -71,7 +71,7 @@ public class ExchangeRecovery<T> {
 
     private boolean isRecovering = false;
 
-    private boolean isBuffering = true;
+    private boolean isBuffering = false;
 
     private Queue<SpreadMessage> queue = new LinkedList<SpreadMessage>();
 
