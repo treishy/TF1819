@@ -74,7 +74,7 @@ public class Share {
 
     public String toString(){
         StringBuilder sb = new StringBuilder();
-        sb.
+        return sb.toString();
     }
 
 
