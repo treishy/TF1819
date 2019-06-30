@@ -56,6 +56,14 @@ public class User {
         this.sharesHistory = sharesHistory;
     }
 
+    public boolean insertBuyOperationIsValid(long budget){
+        if((this.budget - budget) >= 0){
+            this.budget -= budget;
+            return true;
+        }
+        else return false;
+    }
+
     public void removeOneShareByID(int valueID){
         if(ownedShares.containsKey(valueID)) {
             Share share = ownedShares.get(valueID);
@@ -68,12 +76,11 @@ public class User {
     }
 
     public void addOneNewShare(int valueID, long budget){
-        if((this.budget - budget) >= 0){
-            if (ownedShares.containsKey(valueID)){
-                this.ownedShares.get(valueID).incrementQuantity();
-            }
-            else this.ownedShares.put(valueID,(new Share(1,new Date(),budget,valueID)));
-            this.budget -= budget;
+
+        if (ownedShares.containsKey(valueID)){
+            this.ownedShares.get(valueID).incrementQuantity();
         }
+        else this.ownedShares.put(valueID,(new Share(1,new Date(),budget,valueID)));
+
     }
 }

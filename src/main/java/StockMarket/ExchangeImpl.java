@@ -75,9 +75,9 @@ public class ExchangeImpl {
 
     }
 
-    public HashMap<Integer, Long> processOperation(){ // devolve um map {id do utilizador, mudanca de valor}
+    public HashMap<Operation, Long> processOperation(){ // devolve um map {id do utilizador, mudanca de valor}
         Operation op = this.queuedOperations.get(0);
-        HashMap changes = new HashMap<>();
+        HashMap<Operation,Long> changes = new HashMap<>();
 
         if(this.queuedOperations.size() > 0) {
             op = this.queuedOperations.get(0);
@@ -86,7 +86,7 @@ public class ExchangeImpl {
             if (op.isBuyOperation() && this.catalogValues.get(op.getValueID()).available()) {
                 addUserShare(op.getValueID(), op.getUserID());
                 this.catalogValues.get(op.getValueID()).decrementQuantity();
-                changes.put(op.getUserID(), obtainValueLong(op.getValueID()));
+                changes.put(op, obtainValueLong(op.getValueID()));
             } else {
                 for (Operation pop : this.processedOperations) {
                     if (op.getValueID() == (pop.getValueID()) && op.isBuyOperation() != op.isBuyOperation()) {
@@ -98,13 +98,13 @@ public class ExchangeImpl {
                         if (pop.isBuyOperation()) {
                             removeUserShare(op.getValueID(), op.getUserID());
                             addUserShare(pop.getValueID(), pop.getUserID());
-                            changes.put(op.getUserID(), obtainValueLong(op.getValueID()));
-                            changes.put(pop.getUserID(), -obtainValueLong(op.getValueID()));
+                            changes.put(op, obtainValueLong(op.getValueID()));
+                            changes.put(pop, -obtainValueLong(op.getValueID()));
                         } else {
                             removeUserShare(pop.getValueID(), pop.getUserID());
                             addUserShare(op.getValueID(), op.getUserID());
-                            changes.put(op.getUserID(), -obtainValueLong(op.getValueID()));
-                            changes.put(pop.getUserID(), obtainValueLong(op.getValueID()));
+                            changes.put(op, -obtainValueLong(op.getValueID()));
+                            changes.put(pop, obtainValueLong(op.getValueID()));
                         }
                         break;
                     }

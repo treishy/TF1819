@@ -74,6 +74,12 @@ public class Share {
 
     public String toString(){
         StringBuilder sb = new StringBuilder();
+        sb.append("Identificador do Valor: " + this.valueReference);
+        sb.append("Esta accao foi comprada no dia: " + this.boughtDate);
+        if(this.soldDate != null)
+            sb.append("Esta accao foi vendida no dia: " + this.soldDate);
+        sb.append("Esta accao custou: " + this.spendBudget);
+        sb.append("Tem " + this.quantity + " accoes deste valor\n");
         return sb.toString();
     }
 
