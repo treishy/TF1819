@@ -12,6 +12,7 @@ public class UserStub {
     private List<Long> operationsHistory;
     private Map<Integer,Value> catalogValues= new HashMap<>();
     private static int port;
+    private boolean updated= false;
 
     private ExchangeImpl exchange = new ExchangeImpl( new HashMap<>());
 
@@ -74,8 +75,10 @@ public class UserStub {
                             break;
                         case 3:
                             System.out.println("Recebido Informacao de Utilizador");
-                            user = (User) spreadMessage.getObject();
-                            updateUserWith(user);
+                            if(!updated) {
+                                user = (User) spreadMessage.getObject();
+                                updateUserWith(user);
+                            }
                             break;
                         default:
                             System.out.print("Not ready for this kind of message");
@@ -88,7 +91,7 @@ public class UserStub {
                 }
             }
         });
-        sendUserUpdateMessage(this.user.getUsername());
+        sendUserUpdateMessage(username);
 
     }
 
@@ -103,19 +106,17 @@ public class UserStub {
     }
     //
     public void updateUserWith(User u){
-        this.user.setBudget(u.getBudget());
-        this.user.setOwnedShares(u.getOwnedShares());
-        this.user.setSharesHistory(u.getSharesHistory());
+            this.user.setBudget(u.getBudget());
+            this.user.setOwnedShares(u.getOwnedShares());
+            this.user.setSharesHistory(u.getSharesHistory());
+            this.updated = true;
+
     }
 
     public void sendOperationMessage(int valueID, boolean isBuyOpertion){
         SpreadMessage message = new SpreadMessage();
-        try {
-            Request req = new Request(this.user.getUsername(),valueID);
-            message.setObject(req);
-        } catch (SpreadException e) {
-            e.printStackTrace();
-        }
+        Request req = new Request(this.user.getUsername(),valueID);
+        message.setData(this.serializer.encode(req));
         message.addGroup("excServers");
         message.setReliable();
         message.setAgreed();
@@ -132,11 +133,7 @@ public class UserStub {
 
     public void sendUserUpdateMessage(String username){
         SpreadMessage message = new SpreadMessage();
-        try {
-            message.setObject(username);
-        } catch (SpreadException e) {
-            e.printStackTrace();
-        }
+        message.setData(this.serializer.encode(username));
         message.addGroup("excServers");
         message.setReliable();
         message.setAgreed();
