@@ -14,7 +14,12 @@ public class Client {
         //interfaceCliente(scanner);
         int option=1;
         do {
-            System.out.println("Introduza o tipo de operacao a fazer\n 0- Logout\n 1- Compra de Valor\n 2- Venda de Valor\n 3- Consulta de Valores que possui");
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("Introduza o tipo de operacao a fazer\n 0- Logout\n 1- Compra de Valor\n 2- Venda de Valor\n 3- Consulta de Valores que possui\n 4- Consulta de Saldo");
             int valueID;
             option = scanner.nextInt();
             switch (option ) {
@@ -30,11 +35,15 @@ public class Client {
                 case 2:
                     System.out.println("Introduza o valor para o qual deseja fazer a venda");
                     valueID = scanner.nextInt();
-                    user.sendOperationMessage(valueID, false);
+                    if(user.getUser().getOwnedShares().containsKey(valueID))
+                        user.sendOperationMessage(valueID, false);
+                    else System.out.println("Nao pode por esse pedido de venda porque nao tem accoes desse valor");
                     break;
                 case 3:
                     System.out.println(user.getUser().getOwnedShares().toString());
                     break;
+                case 4:
+                    System.out.println("O seu saldo atual e" + user.getUser().getBudget());
                 case 0:
                     System.out.println("Logging out!");
                     break;

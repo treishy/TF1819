@@ -136,6 +136,7 @@ public class ExchangeServer implements Stateful<State> {
                 sendResponse(response, (short) 1);
             else
                 sendResponse(response, (short) 2);
+            System.out.println("Change Processed");
         }
     }
 

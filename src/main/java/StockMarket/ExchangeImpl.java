@@ -76,11 +76,11 @@ public class ExchangeImpl {
     }
 
     public HashMap<Operation, Long> processOperation(){ // devolve um map {id do utilizador, mudanca de valor}
-        Operation op = this.queuedOperations.get(0);
+        //Operation op = this.queuedOperations.get(0);
         HashMap<Operation,Long> changes = new HashMap<>();
 
         if(this.queuedOperations.size() > 0) {
-            op = this.queuedOperations.get(0);
+            Operation op = this.queuedOperations.get(0);
             this.queuedOperations.remove(op);
             boolean found = false;
             if (op.isBuyOperation() && this.catalogValues.get(op.getValueID()).available()) {
@@ -89,8 +89,7 @@ public class ExchangeImpl {
                 changes.put(op, obtainValueLong(op.getValueID()));
             } else {
                 for (Operation pop : this.processedOperations) {
-                    if (op.getValueID() == (pop.getValueID()) && op.isBuyOperation() != op.isBuyOperation()) {
-                        found = true;
+                    if (op.getValueID() == (pop.getValueID()) && op.isBuyOperation() != pop.isBuyOperation()) {
                         pop.evolveState();
                         op.evolveState();
                         this.processedOperations.remove(pop);

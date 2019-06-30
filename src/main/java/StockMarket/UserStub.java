@@ -156,7 +156,7 @@ public class UserStub {
         if(!this.operationsHistory.contains(operationID)){
             this.operationsHistory.add(operationID);
             user.removeOneShareByID(value);
-            System.out.println("You Managed to Get the Share for the Value " + value);
+            System.out.println("You Managed to Sell the Share for the Value " + value);
         }
     }
 
