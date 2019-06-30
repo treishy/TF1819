@@ -146,7 +146,7 @@ public class ExchangeServer implements Stateful<State> {
     public void init() throws Exception {
         initCatalogValues();
         initUsers();
-        connection.connect(null, 4803,"s"+this.port, false, false);
+        connection.connect(null, 4803,"s"+this.port, false, true);
         group.join(connection, "excServers");
         connectionHandler();
     }
