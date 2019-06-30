@@ -131,7 +131,6 @@ public class ExchangeServer implements Stateful<State> {
         for (Map.Entry<Operation, Long> entry : changes.entrySet()) {
             Operation operation = entry.getKey();
             Response response = new Response(operation.getUserID(), operation.getValueID(), operation.getIdentifier(), entry.getValue());
-
             if (operation.isBuyOperation())
                 sendResponse(response, (short) 1);
             else

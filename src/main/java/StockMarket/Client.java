@@ -14,11 +14,7 @@ public class Client {
         //interfaceCliente(scanner);
         int option=1;
         do {
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
             System.out.println("Introduza o tipo de operacao a fazer\n 0- Logout\n 1- Compra de Valor\n 2- Venda de Valor\n 3- Consulta de Valores que possui\n 4- Consulta de Saldo");
             int valueID;
             option = scanner.nextInt();
@@ -44,6 +40,7 @@ public class Client {
                     break;
                 case 4:
                     System.out.println("O seu saldo atual e" + user.getUser().getBudget());
+                    break;
                 case 0:
                     System.out.println("Logging out!");
                     break;

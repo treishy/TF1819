@@ -71,6 +71,7 @@ public class User implements Serializable {
                 if (share.getQuantity() > 1) {
                     share.setQuantity(share.getQuantity() - 1);
                 }
+                else ownedShares.remove(valueID);
                 this.sharesHistory.add(new Share(1, share.getBoughtDate(), new Date(), share.getSpendBudget(), share.getValueReference()));
                 this.budget += share.getSpendBudget();
         }
@@ -83,5 +84,9 @@ public class User implements Serializable {
         }
         else this.ownedShares.put(valueID,(new Share(1,new Date(),budget,valueID)));
 
+    }
+
+    public void changeBudget(long budget){
+        this.budget+=budget;
     }
 }

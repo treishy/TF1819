@@ -118,9 +118,13 @@ public class ExchangeImpl {
 
     public void removeUserShare(int valueID, String user){
         this.users.get(user).removeOneShareByID(valueID);
+        this.users.get(user).changeBudget(this.obtainValueLong(valueID));
+        //this.users.get(user).
     }
 
     public void addUserShare(int valueID, String user){
-        this.users.get(user).addOneNewShare(valueID, 44); //obter budget de algum lado xd
+        this.users.get(user).addOneNewShare(valueID, this.obtainValueLong(valueID));
+        this.users.get(user).changeBudget(this.obtainValueLong(valueID));
+
     }
 }
