@@ -7,10 +7,7 @@ import spread.SpreadException;
 import spread.SpreadGroup;
 import spread.SpreadMessage;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.util.*;
 
 class State {
 
@@ -97,26 +94,43 @@ public class ExchangeServer implements Stateful<State> {
     private void processRequest(SpreadMessage spreadMessage) throws SpreadException {
         Request request = (Request) spreadMessage.getObject();
         Operation operation;
-        HashMap<Integer,Long> changes = null;
+
         switch (spreadMessage.getType()) {
             case 1:
                 System.out.printf("Received new buy operation ...\n");
                 operation = new Operation(request.getValueID(), request.getUserID(), counterId, true);
                 exchange.addNewOrder(operation);
-                changes = exchange.processOperation();
-                //processchanges
+                processChanges(exchange.processOperation());
                 counterId++;
                 break;
             case 2:
                 System.out.printf("Received new sell operation ...\n");
                 operation = new Operation(request.getValueID(), request.getUserID(), counterId, false);
                 exchange.addNewOrder(operation);
-                changes = exchange.processOperation();
+                processChanges(exchange.processOperation());
                 counterId++;
-                //process changes
                 break;
             default:
                 System.out.printf("Received a unknown request ...\n");
+        }
+    }
+
+    private void processChanges(Map<Operation, Long> changes) throws SpreadException {
+        for (Map.Entry<Operation, Long> entry : changes.entrySet()) {
+            Operation operation = entry.getKey();
+            Response response = new Response(operation.getValueID(), operation.getIdentifier(), entry.getValue());
+
+            SpreadMessage spreadMessage = new SpreadMessage();
+            spreadMessage.setObject(response);
+
+            if (operation.isBuyOperation())
+                spreadMessage.setType((short) 1);
+            else
+                spreadMessage.setType((short) 2);
+
+            spreadMessage.setReliable();
+            spreadMessage.addGroup(operation.getUserID());
+            connection.multicast(spreadMessage);
         }
     }
 
