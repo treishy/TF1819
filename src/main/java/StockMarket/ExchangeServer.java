@@ -7,6 +7,7 @@ import spread.SpreadException;
 import spread.SpreadGroup;
 import spread.SpreadMessage;
 
+import java.io.Serializable;
 import java.util.*;
 
 class State {
@@ -57,7 +58,6 @@ public class ExchangeServer implements Stateful<State> {
     public ExchangeServer(int port) {
         this.port = port;
         this.recovery = new ExchangeRecovery<>( this );
-        this.exchange.getCatalogValues().put(0,( new Value(0, "TF", "TF", "TF", 100, 40) ));
         System.out.println(serializer.toString());
     }
 
@@ -92,24 +92,31 @@ public class ExchangeServer implements Stateful<State> {
     }
 
     private void processRequest(SpreadMessage spreadMessage) throws SpreadException {
-        Request request = (Request) spreadMessage.getObject();
+        Request request;
         Operation operation;
 
         switch (spreadMessage.getType()) {
             case 1:
-                System.out.printf("Received new buy operation ...\n");
+                System.out.printf("Received a new buy operation ...\n");
+                request = (Request) spreadMessage.getObject();
                 operation = new Operation(request.getValueID(), request.getUserID(), counterId, true);
                 exchange.addNewOrder(operation);
                 processChanges(exchange.processOperation());
                 counterId++;
                 break;
             case 2:
-                System.out.printf("Received new sell operation ...\n");
+                System.out.printf("Received a new sell operation ...\n");
+                request = (Request) spreadMessage.getObject();
                 operation = new Operation(request.getValueID(), request.getUserID(), counterId, false);
                 exchange.addNewOrder(operation);
                 processChanges(exchange.processOperation());
                 counterId++;
                 break;
+            case 3:
+                System.out.println("Received a new user update message ...");
+                String username = (String) spreadMessage.getObject();
+                User user = exchange.getUsers().get(username);
+                sendResponse(user, (short) 3);
             default:
                 System.out.printf("Received a unknown request ...\n");
         }
@@ -120,24 +127,45 @@ public class ExchangeServer implements Stateful<State> {
             Operation operation = entry.getKey();
             Response response = new Response(operation.getValueID(), operation.getIdentifier(), entry.getValue());
 
-            SpreadMessage spreadMessage = new SpreadMessage();
-            spreadMessage.setObject(response);
-
             if (operation.isBuyOperation())
-                spreadMessage.setType((short) 1);
+                sendResponse(response, (short) 1);
             else
-                spreadMessage.setType((short) 2);
-
-            spreadMessage.setReliable();
-            spreadMessage.addGroup(operation.getUserID());
-            connection.multicast(spreadMessage);
+                sendResponse(response, (short) 2);
         }
     }
 
+    private void sendResponse(Serializable obj, short type) throws SpreadException {
+        SpreadMessage spreadMessage = new SpreadMessage();
+        spreadMessage.setObject(obj);
+        spreadMessage.setType(type);
+        spreadMessage.setReliable();
+        connection.multicast(spreadMessage);
+    }
+
     public void init() throws Exception {
+        initCatalogValues();
+        initUsers();
         connection.connect(null, 4803,"s"+this.port, false, false);
         group.join(connection, "excServers");
         connectionHandler();
+    }
+
+    private void initCatalogValues() {
+        Map<Integer, Value> catalogValues = new HashMap<>();
+        catalogValues.put(0,( new Value(0, "TF", "TF", "TF", 3, 40)));
+        catalogValues.put(1,( new Value(1, "Petroleo", "Galp", "Petroleo Da Galp", 5, 100)));
+        catalogValues.put(2,( new Value(2, "Apple", "Apple Inc.", "Empresa Multinacional Americana", 100, 70)));
+        catalogValues.put(3,( new Value(3, "BitCoin", "Satoshi Nakamoto", "Cryptocurrency", 10, 150)));
+        catalogValues.put(4,( new Value(4, "Ouro", "Unknown", "Elemento Quimico de Alto Valor", 30, 40)));
+        catalogValues.put(5,( new Value(5, "Platina", "Unknown", "Elemento Quimico de Mediano Valor", 30, 30)));
+        exchange.setCatalogValues(catalogValues);
+    }
+
+    private void initUsers() {
+        Map<String, User> users = new HashMap<>();
+        users.put("johnsnow", (new User("jonsnow", 500)));
+        users.put("nightking", (new User("nightking", 500)));
+        exchange.setUsers(users);
     }
 
     @Override

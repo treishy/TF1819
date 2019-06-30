@@ -1,8 +1,9 @@
 package StockMarket;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class User {
+public class User implements Serializable {
     private String username;
     private long budget;
     private Map<Integer , Share> ownedShares;
