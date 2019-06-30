@@ -72,6 +72,10 @@ public class Share {
         this.soldDate = new Date();
     }
 
+    public String toString(){
+        StringBuilder sb = new StringBuilder();
+        sb.
+    }
 
 
 }

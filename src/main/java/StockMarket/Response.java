@@ -1,6 +1,8 @@
 package StockMarket;
 
-public class Response {
+import java.io.Serializable;
+
+public class Response implements Serializable {
     //no type vem 1 -> conseguiu compra de valor 2 - > vendeu valor
     public int valueID;
     public long identifier;

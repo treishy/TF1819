@@ -4,6 +4,7 @@ import io.atomix.utils.serializer.Serializer;
 import io.atomix.utils.serializer.SerializerBuilder;
 import spread.*;
 
+import java.net.InetAddress;
 import java.util.*;
 
 public class UserStub {
@@ -20,6 +21,9 @@ public class UserStub {
 
     private long counterId = 0;
 
+    public User getUser() {
+        return user;
+    }
 
     private Serializer serializer = new SerializerBuilder()
             .addType(Value.class)
@@ -41,6 +45,11 @@ public class UserStub {
         this.operationsHistory = new ArrayList<>();
         //this.exchange.getCatalogValues().put(0,( new Value(0, "TF", "TF", "TF", 100, 40) ));
         System.out.println(serializer.toString());
+        try {
+            connection.connect(InetAddress.getByName("localhost"),0, username, false,false);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         connection.add(new BasicMessageListener() {
             @Override
             public void messageReceived(SpreadMessage spreadMessage) {
@@ -52,12 +61,18 @@ public class UserStub {
                         case 1:
                             rep = (Response) spreadMessage.getObject();
                             checkOperationTypeBuy(rep.identifier, rep.valueID, rep.budget);
+                            break;
                         case 2:
                             rep = (Response) spreadMessage.getObject();
                             checkOperationTypeSell(rep.identifier, rep.valueID);
+                            break;
                         case 3:
                             user = (User) spreadMessage.getObject();
                             updateUserWith(user);
+                            break;
+                        default:
+                            System.out.print("Not ready for this kind of message");
+                            break;
                     }
 
 
@@ -75,10 +90,11 @@ public class UserStub {
         this.user.setSharesHistory(u.getSharesHistory());
     }
 
-    public void sendOperationMessage(int value, boolean isBuyOpertion){
+    public void sendOperationMessage(int valueID, boolean isBuyOpertion){
         SpreadMessage message = new SpreadMessage();
         try {
-            message.setObject(value);
+            Request req = new Request(this.user.getUsername(),valueID);
+            message.setObject(req);
         } catch (SpreadException e) {
             e.printStackTrace();
         }
@@ -96,10 +112,26 @@ public class UserStub {
         }
     }
 
+    public void sendUserUpdateMessage(String username){
+        SpreadMessage message = new SpreadMessage();
+        try {
+            message.setObject(username);
+        } catch (SpreadException e) {
+            e.printStackTrace();
+        }
+        message.addGroup("excServers");
+        message.setReliable();
+        message.setAgreed();
+        message.setType((short) 3);
+        try {
+            connection.multicast(message);
+        } catch (SpreadException e) {
+            e.printStackTrace();
+        }
+    }
 
 
-
-    public void checkOperationTypeBuy(long operationID, int value, long budget){ //tirar budget
+    public void checkOperationTypeBuy(long operationID, int value, long budget){
         if(!this.operationsHistory.contains(operationID)){
             user.addOneNewShare(value,budget);
         }
@@ -111,11 +143,7 @@ public class UserStub {
         }
     }
 
-    public void init() throws Exception {
-        connection.connect(null, 4803,"s"+this.port, false, true);
-        //group.join(connection, "excServers");
 
-    }
 
 
     public SpreadConnection getConnection() {
@@ -132,21 +160,6 @@ public class UserStub {
     }
 
 
-
-    public static void main(String args[]) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Introduza porta a usar");
-        int port = scanner.nextInt();
-        System.out.println("Introduza seu nome de Utilizador");
-        String username = scanner.next();
-        UserStub user = new UserStub(port, username);
-        try {
-            user.init();
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-        }
-        scanner.nextInt();
-    }
 
 
 

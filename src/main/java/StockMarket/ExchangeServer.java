@@ -54,6 +54,7 @@ public class ExchangeServer implements Stateful<State> {
             .addType(StateRequest.class)
             .addType(StateResponse.class)
             .addType(ExchangeServer.class)
+            .addType(Request.class)
             .build();
 
     public ExchangeServer(int port) {
